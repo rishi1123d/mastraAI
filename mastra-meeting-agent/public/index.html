@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meeting Memory Agent</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    .card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    .gradient-bg {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    }
+  </style>
+</head>
+<body class="gradient-bg min-h-screen">
+  <div class="container mx-auto px-4 py-12 max-w-4xl">
+    <header class="text-center mb-12">
+      <h1 class="text-4xl font-bold text-gray-800 mb-2">Meeting Memory Agent</h1>
+      <p class="text-gray-600">Powered by Mastra AI</p>
+    </header>
+    
+    <div class="card bg-white p-8 rounded-xl shadow-lg mb-8">
+      <h2 class="text-xl font-semibold mb-4">Enter Meeting Transcript</h2>
+      <textarea id="transcriptInput" class="w-full h-48 p-4 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="Paste your meeting transcript here..."></textarea>
+      <div class="mt-4 flex justify-end">
+        <button id="analyzeBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+          Analyze Transcript
+        </button>
+      </div>
+    </div>
+    
+    <div id="loadingIndicator" class="hidden text-center py-8">
+      <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+      <p class="mt-4 text-gray-700">Analyzing meeting transcript...</p>
+    </div>
+    
+    <div id="resultsContainer" class="hidden space-y-6">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4 border-l-4 border-indigo-500 pl-3">Analysis Results</h2>
+      
+      <!-- Summary -->
+      <div class="card bg-white p-6 rounded-xl shadow-md">
+        <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Summary
+        </h3>
+        <div id="summaryContent" class="text-gray-700 leading-relaxed"></div>
+      </div>
+      
+      <!-- Action Items -->
+      <div class="card bg-white p-6 rounded-xl shadow-md">
+        <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          Action Items
+        </h3>
+        <ul id="actionItemsContent" class="list-disc pl-8 space-y-2 text-gray-700"></ul>
+      </div>
+      
+      <!-- Sentiment -->
+      <div class="card bg-white p-6 rounded-xl shadow-md">
+        <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Sentiment
+        </h3>
+        <div class="flex items-center">
+          <span id="sentimentBadge" class="inline-block rounded-full px-4 py-1 text-sm font-semibold mr-3"></span>
+          <p class="text-gray-700">The overall tone of the meeting was <span id="sentimentText" class="font-medium"></span>.</p>
+        </div>
+      </div>
+      
+      <!-- Follow-up Email -->
+      <div class="card bg-white p-6 rounded-xl shadow-md">
+        <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          Follow-up Email
+        </h3>
+        <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
+          <pre id="emailContent" class="whitespace-pre-wrap text-gray-700 font-sans"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const analyzeBtn = document.getElementById('analyzeBtn');
+      const transcriptInput = document.getElementById('transcriptInput');
+      const loadingIndicator = document.getElementById('loadingIndicator');
+      const resultsContainer = document.getElementById('resultsContainer');
+      const summaryContent = document.getElementById('summaryContent');
+      const actionItemsContent = document.getElementById('actionItemsContent');
+      const sentimentBadge = document.getElementById('sentimentBadge');
+      const sentimentText = document.getElementById('sentimentText');
+      const emailContent = document.getElementById('emailContent');
+      
+      analyzeBtn.addEventListener('click', async () => {
+        const transcript = transcriptInput.value.trim();
+        
+        if (!transcript) {
+          alert('Please enter a meeting transcript');
+          return;
+        }
+        
+        // Show loading indicator
+        loadingIndicator.classList.remove('hidden');
+        resultsContainer.classList.add('hidden');
+        
+        try {
+          // Call the Mastra API
+          const response = await fetch('http://localhost:4111/api/agents/meetingMemoryAgent/generate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              messages: [transcript]
+            }),
+          });
+          
+          const data = await response.json();
+          
+          // Hide loading indicator
+          loadingIndicator.classList.add('hidden');
+          
+          // Display results
+          summaryContent.textContent = data.summary;
+          
+          // Clear and populate action items
+          actionItemsContent.innerHTML = '';
+          data.actionItems.forEach(item => {
+            const li = document.createElement('li');
+            li.textContent = item;
+            actionItemsContent.appendChild(li);
+          });
+          
+          // Set sentiment badge color
+          sentimentText.textContent = data.sentiment;
+          sentimentBadge.textContent = data.sentiment;
+          
+          if (data.sentiment === 'positive') {
+            sentimentBadge.className = 'inline-block rounded-full px-4 py-1 text-sm font-semibold mr-3 bg-green-100 text-green-800';
+          } else if (data.sentiment === 'negative') {
+            sentimentBadge.className = 'inline-block rounded-full px-4 py-1 text-sm font-semibold mr-3 bg-red-100 text-red-800';
+          } else {
+            sentimentBadge.className = 'inline-block rounded-full px-4 py-1 text-sm font-semibold mr-3 bg-gray-100 text-gray-800';
+          }
+          
+          // Set email content
+          emailContent.textContent = data.followUpEmail;
+          
+          // Show results
+          resultsContainer.classList.remove('hidden');
+          
+        } catch (error) {
+          console.error('Error:', error);
+          loadingIndicator.classList.add('hidden');
+          alert('Error analyzing transcript. Make sure the Mastra server is running.');
+        }
+      });
+    });
+  </script>
+</body>
+</html> 
