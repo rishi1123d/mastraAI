@@ -2,7 +2,7 @@ import { Agent } from "@mastra/core/agent";
 import { openai } from "@ai-sdk/openai";
 
 export const meetingMemoryAgent = new Agent({
-  name: "MeetingMemoryAgent",
+  name: "meetingMemoryAgent",
   instructions: `You are an AI assistant specializing in analyzing meeting transcripts.
     Your task is to:
     1. Provide a concise summary of the meeting
@@ -36,6 +36,7 @@ export const meetingMemoryAgent = new Agent({
     const sentiment = sentimentResponse.text.toLowerCase().trim() as "positive" | "neutral" | "negative";
     
     return { 
+      text: "Analysis complete",
       summary: summary.text, 
       actionItems, 
       sentiment,
